@@ -1,9 +1,15 @@
-hackney_metrics_demo
-=====
+# hackney_metrics_demo
 
-An OTP application
+Demo app for Hackney metrics.
 
-Build
------
+Run it:
 
-    $ rebar3 compile
+```sh
+make shell
+```
+
+Test it:
+
+```erlang
+hackney:get("https://blog.differentpla.net/blog/2023/01/18/beam-telemetry-hackney-metrics/").
+```
