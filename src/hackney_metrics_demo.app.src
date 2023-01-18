@@ -6,7 +6,10 @@
   {applications,
    [kernel,
     stdlib,
-    hackney
+    hackney,
+    cowboy,
+    prometheus,
+    prometheus_cowboy
    ]},
   {env,[]},
   {modules, []},
