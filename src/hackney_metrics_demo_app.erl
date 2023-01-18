@@ -17,7 +17,12 @@ start(_StartType, _StartArgs) ->
     Dispatch =
         cowboy_router:compile([{'_',
                                 [{"/metrics/[:registry]", prometheus_cowboy2_handler, []}]}]),
-    {ok, _} = cowboy:start_clear(http, [{port, ?PORT}], #{env => #{dispatch => Dispatch}}),
+    {ok, _} =
+        cowboy:start_clear(http,
+                           [{port, ?PORT}],
+                           #{env => #{dispatch => Dispatch},
+                             metrics_callback => fun prometheus_cowboy2_instrumenter:observe/1,
+                             stream_handlers => [cowboy_metrics_h, cowboy_stream_h]}),
     ?LOG_INFO("Cowboy server listening on port ~p", [?PORT]),
 
     hackney_metrics_demo_sup:start_link().
