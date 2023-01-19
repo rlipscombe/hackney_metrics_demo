@@ -95,8 +95,12 @@ update_histogram(Name0 = [hackney_pool, Pool, in_use_count], Value)
     ?LOG_INFO(#{f => ?FUNCTION_NAME,
                 name => Name0,
                 value => Value}),
-                Name = name(Name0),
-    prometheus_histogram:declare([{name, Name}, {labels, [pool]}, {help, help(Name0)}]),
+    Name = name(Name0),
+    ?LOG_INFO(#{name => Name}),
+    prometheus_histogram:declare([{name, Name},
+                                  {labels, [pool]},
+                                  {buckets, default},
+                                  {help, help(Name0)}]),
     prometheus_histogram:observe(Name, [Pool], Value),
     ok.
 
