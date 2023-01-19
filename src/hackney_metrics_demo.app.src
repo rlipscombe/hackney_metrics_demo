@@ -6,9 +6,10 @@
   {applications,
    [kernel,
     stdlib,
+    % start prometheus before anything wants to register metrics.
+    prometheus,
     hackney,
     cowboy,
-    prometheus,
     prometheus_cowboy
    ]},
   {env,[]},
