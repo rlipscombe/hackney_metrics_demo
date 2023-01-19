@@ -90,12 +90,15 @@ update_histogram(Name = undefined, Fun) when is_function(Fun, 0) ->
                 name => Name,
                 value => Duration}),
     Result;
-update_histogram(Name0 = [hackney_pool, Pool, in_use_count], Value) when is_number(Value) ->
+update_histogram(Name0 = [hackney_pool, Pool, in_use_count], Value)
+    when is_number(Value) ->
     ?LOG_INFO(#{f => ?FUNCTION_NAME,
                 name => Name0,
                 value => Value}),
-                prometheus_histogram:declare([{name, Name}, {labels, [pool]}, {help, help(Name0)}]),
-                ok.
+                Name = name(Name0),
+    prometheus_histogram:declare([{name, Name}, {labels, [pool]}, {help, help(Name0)}]),
+    prometheus_histogram:observe(Name, [Pool], Value),
+    ok.
 
 update_gauge(Name = undefined, Value) ->
     ?LOG_INFO(#{f => ?FUNCTION_NAME,
