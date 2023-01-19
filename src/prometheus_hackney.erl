@@ -40,16 +40,11 @@ help([hackney_pool, _Pool, in_use_count]) -> "How many connections from the pool
 help([hackney_pool, _Pool, free_count]) -> "Number of free sockets in the pool";
 help([hackney_pool, _Pool, queue_count]) -> "Number of queued clients".
 
-new(Type = counter, Name) ->
+new(Type, Name) ->
     ?LOG_INFO(#{f => ?FUNCTION_NAME,
                 name => Name,
                 type => Type}),
-    prometheus_counter:declare([{name, name(Name)}, {help, help(Name)}]);
-new(Type = histogram, Name) ->
-    ?LOG_INFO(#{f => ?FUNCTION_NAME,
-                name => Name,
-                type => Type}),
-    prometheus_histogram:declare([{name, name(Name)}, {help, help(Name)}]).
+    ok.
 
 delete(Name) ->
     ?LOG_INFO(#{f => ?FUNCTION_NAME, name => Name}).
@@ -57,10 +52,13 @@ delete(Name) ->
 increment_counter(Name) ->
     increment_counter(Name, 1).
 
-increment_counter(Name = [hackney, _], Value) ->
+increment_counter(Name0 = [hackney, _], Value) ->
     ?LOG_INFO(#{f => ?FUNCTION_NAME,
-                name => Name,
+                name => Name0,
                 value => Value}),
+    Name = name(Name0),
+    ?LOG_INFO(#{name => Name}),
+    prometheus_counter:declare([{name, Name}, {help, help(Name)}]),
     prometheus_counter:inc(name(Name), Value);
 increment_counter(Name0 = [hackney, Host, _], Value) when is_list(Host) ->
     ?LOG_INFO(#{f => ?FUNCTION_NAME,
