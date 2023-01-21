@@ -58,8 +58,8 @@ increment_counter(Name0 = [hackney, _], Value) ->
                 value => Value}),
     Name = name(Name0),
     ?LOG_INFO(#{name => Name}),
-    prometheus_counter:declare([{name, Name}, {help, help(Name)}]),
-    prometheus_counter:inc(name(Name), Value);
+    prometheus_counter:declare([{name, Name}, {help, help(Name0)}]),
+    prometheus_counter:inc(Name, Value);
 increment_counter(Name0 = [hackney, Host, _], Value) when is_list(Host) ->
     ?LOG_INFO(#{f => ?FUNCTION_NAME,
                 name => Name0,
@@ -70,26 +70,33 @@ increment_counter(Name0 = [hackney, Host, _], Value) when is_list(Host) ->
     prometheus_counter:inc(Name, [Host], Value).
 
 decrement_counter(Name) ->
-    decrement_counter(Name, 1).
+    increment_counter(Name, -1).
 
-decrement_counter(Name = undefined, Value) ->
-    ?LOG_INFO(#{f => ?FUNCTION_NAME,
-                name => Name,
-                value => Value}).
+decrement_counter(Name, Value) ->
+    increment_counter(Name, -Value).
 
-update_histogram(Name = undefined, Fun) when is_function(Fun, 0) ->
+update_histogram(Name, Fun) when is_function(Fun, 0) ->
     Begin = os:timestamp(),
     Result = Fun(),
     Duration =
         timer:now_diff(
             os:timestamp(), Begin)
         div 1000,
-    ?LOG_INFO(#{f => ?FUNCTION_NAME,
-                name => Name,
-                value => Duration}),
+    update_histogram(Name, Duration),
     Result;
-update_histogram(Name0 = [hackney_pool, Pool, in_use_count], Value)
-    when is_number(Value) ->
+update_histogram(Name0 = [hackney, Host, _], Value) when is_number(Value) ->
+    ?LOG_INFO(#{f => ?FUNCTION_NAME,
+                name => Name0,
+                value => Value}),
+    Name = name(Name0),
+    ?LOG_INFO(#{name => Name}),
+    prometheus_histogram:declare([{name, Name},
+                                  {labels, [host]},
+                                  {buckets, default},
+                                  {help, help(Name0)}]),
+    prometheus_histogram:observe(Name, [Host], Value),
+    ok;
+update_histogram(Name0 = [hackney_pool, Pool, _], Value) when is_number(Value) ->
     ?LOG_INFO(#{f => ?FUNCTION_NAME,
                 name => Name0,
                 value => Value}),
