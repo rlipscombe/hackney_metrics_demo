@@ -25,6 +25,9 @@ start(_StartType, _StartArgs) ->
                              stream_handlers => [cowboy_metrics_h, cowboy_stream_h]}),
     ?LOG_INFO("Cowboy server listening on port ~p", [?PORT]),
 
+    % hackney_trace is just a shonky wrapper around dbg; you'd be better doing it manually.
+    hackney_trace:enable(max, {fun(Msg, _) -> io:format("~p\n", [Msg]) end, []}),
+
     hackney_metrics_demo_sup:start_link().
 
 stop(_State) ->
