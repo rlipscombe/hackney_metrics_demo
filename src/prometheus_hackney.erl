@@ -106,7 +106,19 @@ increment_counter(Name0 = [hackney, Host, _], Value) when is_list(Host) ->
     Name = name(Name0),
     ?LOG_INFO(#{name => Name}),
     prometheus_counter:declare([{name, Name}, {labels, [host]}, {help, help(Name0)}]),
-    prometheus_counter:inc(Name, [Host], Value).
+    prometheus_counter:inc(Name, [Host], Value);
+increment_counter(Name0 = [hackney_pool, Host, _], Value) when is_list(Host) ->
+    ?LOG_INFO(#{f => ?FUNCTION_NAME,
+                name => Name0,
+                value => Value}),
+    Name = name(Name0),
+    ?LOG_INFO(#{name => Name}),
+    prometheus_counter:declare([{name, Name}, {labels, [host]}, {help, help(Name0)}]),
+    prometheus_counter:inc(Name, [Host], Value);
+increment_counter(Name0, Value) ->
+    ?LOG_ERROR(#{f => ?FUNCTION_NAME,
+                 name => Name0,
+                 value => Value}).
 
 decrement_counter(Name) ->
     % TODO: This is not allowed by prometheus. Maybe what we want is actually a gauge?
@@ -131,7 +143,7 @@ update_histogram(Name0 = [hackney, Host, _], Value) when is_number(Value) ->
                                   {labels, [host]},
                                   {buckets, default},
                                   {help, help(Name0)}]),
-                                  ?LOG_NOTICE("here"),
+    ?LOG_NOTICE("here"),
     prometheus_histogram:observe(Name, [Host], Value),
     ?LOG_NOTICE("here2"),
     ok;
@@ -150,7 +162,11 @@ update_histogram(Name0 = [hackney_pool, Pool, _], Value) when is_number(Value) -
                                   {buckets, default},
                                   {help, help(Name0)}]),
     prometheus_histogram:observe(Name, [Pool], Value),
-    ok.
+    ok;
+update_histogram(Name0, Value) ->
+    ?LOG_ERROR(#{f => ?FUNCTION_NAME,
+                 name => Name0,
+                 value => Value}).
 
 increment_gauge(Name0 = [hackney, _], Value) ->
     ?LOG_INFO(#{f => ?FUNCTION_NAME,
@@ -167,7 +183,11 @@ increment_gauge(Name0 = [hackney, Host, _], Value) ->
     Name = name(Name0),
     ?LOG_INFO(#{name => Name}),
     prometheus_gauge:declare([{name, Name}, {labels, [host]}, {help, help(Name0)}]),
-    prometheus_gauge:inc(Name, [Host], Value).
+    prometheus_gauge:inc(Name, [Host], Value);
+increment_gauge(Name0, Value) ->
+    ?LOG_ERROR(#{f => ?FUNCTION_NAME,
+                 name => Name0,
+                 value => Value}).
 
 update_gauge(Name0 = [hackney, _], Value) when is_integer(Value) ->
     ?LOG_INFO(#{f => ?FUNCTION_NAME,
@@ -192,15 +212,22 @@ update_gauge(Name0 = [hackney_pool, Pool, _], Value) when is_integer(Value) ->
     Name = name(Name0),
     ?LOG_INFO(#{name => Name}),
     prometheus_gauge:declare([{name, Name}, {labels, [pool]}, {help, help(Name0)}]),
-    prometheus_gauge:set(Name, [Pool], Value).
+    ?LOG_NOTICE("here3"),
+    prometheus_gauge:set(Name, [Pool], Value),
+    ?LOG_NOTICE("here4"),
+    ok;
+update_gauge(Name0, Value) ->
+    ?LOG_ERROR(#{f => ?FUNCTION_NAME,
+                 name => Name0,
+                 value => Value}).
 
 update_meter(Name, Value) ->
     % TODO: I'm not entirely sure how to convert this to a prometheus metric.
-    ?LOG_INFO(#{f => ?FUNCTION_NAME,
-                name => Name,
-                value => Value}).
+    ?LOG_NOTICE(#{f => ?FUNCTION_NAME,
+                  name => Name,
+                  value => Value}).
 
-                '$handle_undefined_function'(Func, Args) ->
-                    ?LOG_ERROR(#{f => ?FUNCTION_NAME,
-                    func => Func,
-                    args => Args}).
+'$handle_undefined_function'(Func, Args) ->
+    ?LOG_ERROR(#{f => ?FUNCTION_NAME,
+                 func => Func,
+                 args => Args}).
