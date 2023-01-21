@@ -82,15 +82,11 @@ decrement_counter(Name) ->
 decrement_counter(Name, Value) ->
     increment_counter(Name, -Value).
 
-% TODO: are [hackney_pool, P, in_use_count] and [_, _, free_use_count] actually gauges?
 update_histogram(Name, Fun) when is_function(Fun, 0) ->
-    Begin = os:timestamp(),
-    Result = Fun(),
-    Duration =
-        timer:now_diff(
-            os:timestamp(), Begin)
-        div 1000,
-    update_histogram(Name, Duration),
+    {ElapsedUs, Result} = timer:tc(Fun),
+    % hackney reports other durations in milliseconds, so...
+    ElapsedMs = ElapsedUs / 1000,
+    update_histogram(Name, ElapsedMs),
     Result;
 update_histogram(Name0 = [hackney, Host, _], Value) when is_number(Value) ->
     ?LOG_INFO(#{f => ?FUNCTION_NAME,
@@ -102,8 +98,14 @@ update_histogram(Name0 = [hackney, Host, _], Value) when is_number(Value) ->
                                   {labels, [host]},
                                   {buckets, default},
                                   {help, help(Name0)}]),
+                                  ?LOG_NOTICE("here"),
     prometheus_histogram:observe(Name, [Host], Value),
+    ?LOG_NOTICE("here2"),
     ok;
+update_histogram(Name0 = [hackney_pool, _Pool, Metric], Value)
+    when Metric =:= in_use_count; Metric =:= free_count; Metric =:= queue_count ->
+    % Actually a gauge; see https://github.com/benoitc/hackney/issues/560
+    update_gauge(Name0, Value);
 update_histogram(Name0 = [hackney_pool, Pool, _], Value) when is_number(Value) ->
     ?LOG_INFO(#{f => ?FUNCTION_NAME,
                 name => Name0,
@@ -134,7 +136,7 @@ increment_gauge(Name0 = [hackney, Host, _], Value) ->
     prometheus_gauge:declare([{name, Name}, {labels, [host]}, {help, help(Name0)}]),
     prometheus_gauge:inc(Name, [Host], Value).
 
-update_gauge(Name0 = [hackney, _], Value) ->
+update_gauge(Name0 = [hackney, _], Value) when is_integer(Value) ->
     ?LOG_INFO(#{f => ?FUNCTION_NAME,
                 name => Name0,
                 value => Value}),
@@ -142,17 +144,30 @@ update_gauge(Name0 = [hackney, _], Value) ->
     ?LOG_INFO(#{name => Name}),
     prometheus_gauge:declare([{name, Name}, {help, help(Name0)}]),
     prometheus_gauge:set(Name, Value);
-update_gauge(Name0 = [hackney, Host, _], Value) ->
+update_gauge(Name0 = [hackney, Host, _], Value) when is_integer(Value) ->
     ?LOG_INFO(#{f => ?FUNCTION_NAME,
                 name => Name0,
                 value => Value}),
     Name = name(Name0),
     ?LOG_INFO(#{name => Name}),
     prometheus_gauge:declare([{name, Name}, {labels, [host]}, {help, help(Name0)}]),
-    prometheus_gauge:set(Name, [Host], Value).
+    prometheus_gauge:set(Name, [Host], Value);
+update_gauge(Name0 = [hackney_pool, Pool, _], Value) when is_integer(Value) ->
+    ?LOG_INFO(#{f => ?FUNCTION_NAME,
+                name => Name0,
+                value => Value}),
+    Name = name(Name0),
+    ?LOG_INFO(#{name => Name}),
+    prometheus_gauge:declare([{name, Name}, {labels, [pool]}, {help, help(Name0)}]),
+    prometheus_gauge:set(Name, [Pool], Value).
 
-% TODO: It's failing (silently) with checkout_failure because this isn't implemented.
-update_meter(Name = undefined, Value) ->
+update_meter(Name, Value) ->
+    % TODO: I'm not entirely sure how to convert this to a prometheus metric.
     ?LOG_INFO(#{f => ?FUNCTION_NAME,
                 name => Name,
                 value => Value}).
+
+                '$handle_undefined_function'(Func, Args) ->
+                    ?LOG_ERROR(#{f => ?FUNCTION_NAME,
+                    func => Func,
+                    args => Args}).
