@@ -7,39 +7,71 @@
 -include_lib("kernel/include/logger.hrl").
 
 % note the change in name
-name([hackney, nb_requests]) -> hackney_nb_all_requests;
-name([hackney, total_requests]) -> hackney_total_requests;
-name([hackney, finished_requests]) -> hackney_finished_requests;
-name([hackney, _Host, nb_requests]) -> hackney_nb_requests;
-name([hackney, _Host, request_time]) -> hackney_request_time;
-name([hackney, _Host, connect_time]) -> hackney_connect_time;
-name([hackney, _Host, response_time]) -> hackney_response_time;
-name([hackney, _Host, connect_timeout]) -> hackney_connect_timeout;
-name([hackney, _Host, connect_error]) -> hackney_connect_error;
-name([hackney_pool, _Host, new_connection]) -> hackney_pool_new_connection;
-name([hackney_pool, _Host, reuse_connection]) -> hackney_pool_reuse_connection;
-name([hackney_pool, _Pool, take_rate]) -> hackney_pool_take_rate;
-name([hackney_pool, _Pool, no_socket]) -> hackney_pool_no_socket;
-name([hackney_pool, _Pool, in_use_count]) -> hackney_pool_in_use_count;
-name([hackney_pool, _Pool, free_count]) -> hackney_pool_free_count;
-name([hackney_pool, _Pool, queue_count]) -> hackney_pool_queue_count.
+name([hackney, nb_requests]) ->
+    hackney_nb_all_requests;
+name([hackney, total_requests]) ->
+    hackney_total_requests;
+name([hackney, finished_requests]) ->
+    hackney_finished_requests;
+name([hackney, _Host, nb_requests]) ->
+    hackney_nb_requests;
+name([hackney, _Host, request_time]) ->
+    hackney_request_time;
+name([hackney, _Host, connect_time]) ->
+    hackney_connect_time;
+name([hackney, _Host, response_time]) ->
+    hackney_response_time;
+name([hackney, _Host, connect_timeout]) ->
+    hackney_connect_timeout;
+name([hackney, _Host, connect_error]) ->
+    hackney_connect_error;
+name([hackney_pool, _Host, new_connection]) ->
+    hackney_pool_new_connection;
+name([hackney_pool, _Host, reuse_connection]) ->
+    hackney_pool_reuse_connection;
+name([hackney_pool, _Pool, take_rate]) ->
+    hackney_pool_take_rate;
+name([hackney_pool, _Pool, no_socket]) ->
+    hackney_pool_no_socket;
+name([hackney_pool, _Pool, in_use_count]) ->
+    hackney_pool_in_use_count;
+name([hackney_pool, _Pool, free_count]) ->
+    hackney_pool_free_count;
+name([hackney_pool, _Pool, queue_count]) ->
+    hackney_pool_queue_count.
 
-help([_, nb_requests]) -> "Number of running requests";
-help([_, total_requests]) -> "Total number of requests";
-help([_, finished_requests]) -> "Total number of requests finished";
-help([_, _Host, nb_requests]) -> "Number of running requests";
-help([_, _Host, request_time]) -> "Request time";
-help([_, _Host, connect_time]) -> "Connect time";
-help([_, _Host, response_time]) -> "Response time";
-help([_, _Host, connect_timeout]) -> "Number of connect timeout";
-help([_, _Host, connect_error]) -> "Number of timeout errors";
-help([hackney_pool, _Host, new_connection]) -> "Number of new pool connections per host";
-help([hackney_pool, _Host, reuse_connection]) -> "Number of reused pool connections per host";
-help([hackney_pool, _Pool, take_rate]) -> "Rate at which a connection is retrieved from the pool";
-help([hackney_pool, _Pool, no_socket]) -> "Count of new connections";
-help([hackney_pool, _Pool, in_use_count]) -> "How many connections from the pool are used";
-help([hackney_pool, _Pool, free_count]) -> "Number of free sockets in the pool";
-help([hackney_pool, _Pool, queue_count]) -> "Number of queued clients".
+help([_, nb_requests]) ->
+    "Number of running requests";
+help([_, total_requests]) ->
+    "Total number of requests";
+help([_, finished_requests]) ->
+    "Total number of requests finished";
+help([_, _Host, nb_requests]) ->
+    "Number of running requests";
+help([_, _Host, request_time]) ->
+    "Request time";
+help([_, _Host, connect_time]) ->
+    "Connect time";
+help([_, _Host, response_time]) ->
+    "Response time";
+help([_, _Host, connect_timeout]) ->
+    "Number of connect timeout";
+help([_, _Host, connect_error]) ->
+    "Number of timeout errors";
+help([hackney_pool, _Host, new_connection]) ->
+    "Number of new pool connections per host";
+help([hackney_pool, _Host, reuse_connection]) ->
+    "Number of reused pool connections per host";
+help([hackney_pool, _Pool, take_rate]) ->
+    "Rate at which a connection is retrieved from the pool";
+help([hackney_pool, _Pool, no_socket]) ->
+    "Count of new connections";
+help([hackney_pool, _Pool, in_use_count]) ->
+    "How many connections from the pool are used";
+help([hackney_pool, _Pool, free_count]) ->
+    "Number of free sockets in the pool";
+help([hackney_pool, _Pool, queue_count]) ->
+    "Number of queued clients".
 
 new(Type, Name) ->
     ?LOG_INFO(#{f => ?FUNCTION_NAME,
