@@ -52,6 +52,12 @@ delete(Name) ->
 increment_counter(Name) ->
     increment_counter(Name, 1).
 
+increment_counter(Name0 = [hackney, nb_requests], Value) ->
+    % nb_requests is actually a gauge; it's incremented/decremented around each request.
+    increment_gauge(Name0, Value);
+increment_counter(Name0 = [hackney, _Host, nb_requests], Value) ->
+    % nb_requests is actually a gauge; it's incremented/decremented around each request.
+    increment_gauge(Name0, Value);
 increment_counter(Name0 = [hackney, _], Value) ->
     ?LOG_INFO(#{f => ?FUNCTION_NAME,
                 name => Name0,
@@ -70,11 +76,13 @@ increment_counter(Name0 = [hackney, Host, _], Value) when is_list(Host) ->
     prometheus_counter:inc(Name, [Host], Value).
 
 decrement_counter(Name) ->
+    % TODO: This is not allowed by prometheus. Maybe what we want is actually a gauge?
     increment_counter(Name, -1).
 
 decrement_counter(Name, Value) ->
     increment_counter(Name, -Value).
 
+% TODO: are [hackney_pool, P, in_use_count] and [_, _, free_use_count] actually gauges?
 update_histogram(Name, Fun) when is_function(Fun, 0) ->
     Begin = os:timestamp(),
     Result = Fun(),
@@ -109,11 +117,41 @@ update_histogram(Name0 = [hackney_pool, Pool, _], Value) when is_number(Value) -
     prometheus_histogram:observe(Name, [Pool], Value),
     ok.
 
-update_gauge(Name = undefined, Value) ->
+increment_gauge(Name0 = [hackney, _], Value) ->
     ?LOG_INFO(#{f => ?FUNCTION_NAME,
-                name => Name,
-                value => Value}).
+                name => Name0,
+                value => Value}),
+    Name = name(Name0),
+    ?LOG_INFO(#{name => Name}),
+    prometheus_gauge:declare([{name, Name}, {help, help(Name0)}]),
+    prometheus_gauge:inc(Name, Value);
+increment_gauge(Name0 = [hackney, Host, _], Value) ->
+    ?LOG_INFO(#{f => ?FUNCTION_NAME,
+                name => Name0,
+                value => Value}),
+    Name = name(Name0),
+    ?LOG_INFO(#{name => Name}),
+    prometheus_gauge:declare([{name, Name}, {labels, [host]}, {help, help(Name0)}]),
+    prometheus_gauge:inc(Name, [Host], Value).
 
+update_gauge(Name0 = [hackney, _], Value) ->
+    ?LOG_INFO(#{f => ?FUNCTION_NAME,
+                name => Name0,
+                value => Value}),
+    Name = name(Name0),
+    ?LOG_INFO(#{name => Name}),
+    prometheus_gauge:declare([{name, Name}, {help, help(Name0)}]),
+    prometheus_gauge:set(Name, Value);
+update_gauge(Name0 = [hackney, Host, _], Value) ->
+    ?LOG_INFO(#{f => ?FUNCTION_NAME,
+                name => Name0,
+                value => Value}),
+    Name = name(Name0),
+    ?LOG_INFO(#{name => Name}),
+    prometheus_gauge:declare([{name, Name}, {labels, [host]}, {help, help(Name0)}]),
+    prometheus_gauge:set(Name, [Host], Value).
+
+% TODO: It's failing (silently) with checkout_failure because this isn't implemented.
 update_meter(Name = undefined, Value) ->
     ?LOG_INFO(#{f => ?FUNCTION_NAME,
                 name => Name,
