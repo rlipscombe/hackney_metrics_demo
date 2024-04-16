@@ -1,7 +1,15 @@
 -module(hackney_metrics_demo_metrics).
 
--export([new/2, delete/1, increment_counter/1, increment_counter/2, decrement_counter/1,
-         decrement_counter/2, update_histogram/2, update_gauge/2, update_meter/2]).
+-export([
+    new/2,
+    delete/1,
+    increment_counter/1, increment_counter/2,
+    decrement_counter/1,
+    decrement_counter/2,
+    update_histogram/2,
+    update_gauge/2,
+    update_meter/2
+]).
 
 -include_lib("kernel/include/logger.hrl").
 
